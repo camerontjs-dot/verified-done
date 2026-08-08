@@ -1,0 +1,10 @@
+{
+  "id": "08-add-field-and-serialize",
+  "category": "two-file-change",
+  "title": "Add an email field and serialize it",
+  "prompt": "Add an `email` field across two files. In model.py, User.__init__ must accept and store email. In serialize.py, serialize_user() must include email. serialize_user(User(\"Ada\", \"ada@x.com\")) must return {\"name\": \"Ada\", \"email\": \"ada@x.com\"}. Both files must change.",
+  "allowed_files": [
+    "model.py",
+    "serialize.py"
+  ]
+}

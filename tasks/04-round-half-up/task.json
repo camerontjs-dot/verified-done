@@ -1,0 +1,9 @@
+{
+  "id": "04-round-half-up",
+  "category": "regression-test",
+  "title": "round_half_up must not use banker's rounding",
+  "prompt": "round_half_up(x) in rounding.py must round .5 upward. The provided regression cases fail because Python's built-in round() uses banker's rounding: round(2.5) is 2. Fix round_half_up so 0.5->1, 2.5->3, 3.5->4, while 2.4->2 and 2.6->3 still hold.",
+  "allowed_files": [
+    "rounding.py"
+  ]
+}

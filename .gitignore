@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+results/receipts/
+results/live/
+.DS_Store
+# Live JSON can include model request ids; keep local-only unless curating a board
+# results/live/ is retained on disk for CROSS_STACK_BOARD; do not push secrets

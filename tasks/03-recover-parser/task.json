@@ -1,0 +1,9 @@
+{
+  "id": "03-recover-parser",
+  "category": "edit-recovery",
+  "title": "Parser raises on empty input",
+  "prompt": "parse_ints(s) in parser.py raises on valid input. parse_ints(\"1,2,3\") must return [1, 2, 3] and parse_ints(\"\") must return []. Fix it.",
+  "allowed_files": [
+    "parser.py"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "02-paginate-last-page",
+  "category": "single-file-bug",
+  "title": "Paginate drops the final partial page",
+  "prompt": "paginate(items, per_page) in paginate.py drops items on the final partial page. Fix it so every item appears exactly once, in order, across the returned pages.",
+  "allowed_files": [
+    "paginate.py"
+  ]
+}

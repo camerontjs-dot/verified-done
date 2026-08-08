@@ -1,0 +1,10 @@
+{
+  "id": "07-propagate-tax-param",
+  "category": "two-file-change",
+  "title": "Thread a tax_rate through cart and checkout",
+  "prompt": "Add tax support across two files. In cart.py, total() must accept a tax_rate (default 0.0) and apply it. In checkout.py, checkout() must accept a tax_rate and pass it through to total(). checkout(items, tax_rate=0.1) must return the taxed total. Both files must change.",
+  "allowed_files": [
+    "cart.py",
+    "checkout.py"
+  ]
+}

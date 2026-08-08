@@ -1,0 +1,9 @@
+{
+  "id": "01-add-currency-field",
+  "category": "mechanical-edit",
+  "title": "Add a currency field to Price",
+  "prompt": "In money.py, add a `currency` field to the Price dataclass, defaulting to \"USD\", and include it in the to_dict() output. Price(amount=1.0, currency=\"EUR\").to_dict() must report the given currency.",
+  "allowed_files": [
+    "money.py"
+  ]
+}
