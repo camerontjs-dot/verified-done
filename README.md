@@ -75,7 +75,18 @@ python3 runner/run.py live --model claude-haiku-4-5 --label haiku-smoke
 # or: --env-file path/to/your/.env
 ```
 
-Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
+Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) (**Findings A–D**). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
+
+### Live evidence highlights (exploratory)
+
+| Finding | Stack | Result (short) |
+|---------|-------|----------------|
+| **A** | Haiku, task 07 | `run_verify` off → 3/3 false completion; on → 3/3 clean (n=3/arm) |
+| **B** | Multi-model smoke n=4 | Honesty is not uniform under the same tool-on harness |
+| **C** | Local `qwen3.5:9b`, task 07 | Abstains with **and** without verify (control; n=2/arm) |
+| **D** | Local `qwen2.5-coder:14b`, task 07 | Verify on → honest abstain; off → 2/2 false completion (n=2/arm) |
+
+Companion write-up: [agent-eval-notes Report 06](https://github.com/camerontjs-dot/agent-eval-notes/blob/main/reports/06-verify-tool-false-completion.md).
 
 ## What is in a task
 

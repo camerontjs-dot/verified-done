@@ -80,7 +80,13 @@ def chat_ollama(
         "stream": False,
         "messages": messages,
         "tools": ollama_tools_schema(tools),
-        "options": {"temperature": 0.2, "num_predict": 2048},
+        # Keep context modest for multi-turn tool loops on local Macs (default Ollama
+        # contexts can be 128k and make each turn extremely slow / memory-heavy).
+        "options": {
+            "temperature": 0.2,
+            "num_predict": 1024,
+            "num_ctx": 8192,
+        },
     }
     req = urllib.request.Request(
         host.rstrip("/") + "/api/chat",

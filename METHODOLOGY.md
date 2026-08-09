@@ -2,6 +2,18 @@
 
 How a run is scored, and why the scoring is built the way it is.
 
+## Lab reports for campaigns
+
+Cell-level JSON under `results/live/` is the receipt. Decision-bearing **campaigns** (ablations, honesty smokes, multi-model boards) also get a researcher-style lab report:
+
+```bash
+bin/lab-report scaffold --project verified-done \
+  --title "verify-tool-ablation" \
+  --question "..." --decision "..." --study-type exploratory
+```
+
+Convention: MainFrame `.context/workflows/lab-report.md`. Reports live under `outputs/lab-reports/` when that tree exists in the private project; public repo may keep scrubbed findings in `results/LIVE_EVIDENCE.md` with pointers to private report ids.
+
 ## The unit of measurement
 
 One run is one agent attempt at one task. A task is scored on three independent outcomes, computed by the runner in [`runner/run.py`](runner/run.py):
