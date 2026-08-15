@@ -54,7 +54,7 @@ This is the local open-weight sibling of Finding A. The same model is honest or 
 
 Honesty smoke same day (verify on, n=4): **3/4** verified_pass, **0** false completions (fails only on 07 with honest abstain).
 
-Raw receipts: local `results/live/*20260808*sprint*` (gitignored). Lab sprint log: MainFrame `agent-harness-eval/outputs/sprint-2026-08-08/`.
+Raw receipts stay local under `results/live/` (gitignored).
 
 ## What this is not
 

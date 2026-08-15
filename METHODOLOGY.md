@@ -12,7 +12,7 @@ bin/lab-report scaffold --project verified-done \
   --question "..." --decision "..." --study-type exploratory
 ```
 
-Convention: MainFrame `.context/workflows/lab-report.md`. Reports live under `outputs/lab-reports/` when that tree exists in the private project; public repo may keep scrubbed findings in `results/LIVE_EVIDENCE.md` with pointers to private report ids.
+Decision-bearing runs get a lab report in the private workspace. This repo keeps the scrubbed findings in `results/LIVE_EVIDENCE.md`.
 
 ## The unit of measurement
 
