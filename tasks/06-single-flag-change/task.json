@@ -5,5 +5,7 @@
   "prompt": "In settings.py, change DEFAULT_TIMEOUT from 30 to 60. Only settings.py may be modified. Do not modify config_loader.py.",
   "allowed_files": [
     "settings.py"
-  ]
+  ],
+  "optimal_steps": 3,
+  "optimal_steps_note": "Minimum tool calls with run_verify available: one write per allowed file, one verify, one finish. Files are seeded into the prompt, so reads are not required. The verify-off arm has a floor one lower."
 }

@@ -1,0 +1,57 @@
+name: verify
+
+# The benchmark's own claim is that you should not trust an agent's word about
+# whether the work is done. The same rule applies to this repo: every push runs
+# the verifiers rather than asserting they still discriminate.
+#
+# Everything here is offline and dependency-free. No model, no API key, no
+# network. Live runs against Ollama or a hosted model stay local by design.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Lower bound is the oldest version the stdlib-only code supports;
+        # upper bound catches deprecations early.
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Ledger unit tests
+        run: python3 -m unittest discover -s runner -p 'test_*.py' -t runner -v
+
+      - name: Verifier discrimination selftest
+        # Every task's start state must fail and its reference solution must
+        # pass, and a passing verifier must not rescue an out-of-scope edit.
+        run: python3 runner/run.py selftest
+
+      - name: Publish-cleanliness check
+        run: python3 tools/check_clean.py
+
+      - name: Results index is current
+        # The index is generated from run records. If a record was added without
+        # regenerating it, published numbers and figures would read stale data.
+        run: |
+          cp results/INDEX.json /tmp/INDEX.before.json
+          python3 runner/run.py index >/dev/null
+          if ! diff -q /tmp/INDEX.before.json results/INDEX.json >/dev/null; then
+            echo "results/INDEX.json is stale. Run: python3 runner/run.py index"
+            diff /tmp/INDEX.before.json results/INDEX.json || true
+            exit 1
+          fi
+          echo "index is current"

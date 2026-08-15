@@ -12,7 +12,7 @@ bin/lab-report scaffold --project verified-done \
   --question "..." --decision "..." --study-type exploratory
 ```
 
-Decision-bearing runs get a lab report in the private workspace. This repo keeps the scrubbed findings in `results/LIVE_EVIDENCE.md`.
+Decision-bearing runs get a lab report in the private workspace. This repo keeps the scrubbed findings in `results/LIVE_EVIDENCE.md`, and machine-readable outcomes in `results/INDEX.json`.
 
 ## The unit of measurement
 
@@ -72,6 +72,89 @@ Selftest confirms each verifier can be failed and can be passed. It does not pro
 ## Ledger labels
 
 Every grade and live receipt maps to one primary **ledger** label (shared taxonomy with the document surface). See [`LEDGER.md`](LEDGER.md). Legacy fields (`verified_pass`, `false_completion`, `scope_violation`) remain first-class columns; the ledger is the cross-surface readout.
+
+## Consistency, not just the per-trial rate
+
+A single-trial pass rate says whether an agent *can* do something. It does not say whether the agent does it *reliably*, and reliability is the question that matters when nobody reviews the output.
+
+Runs therefore report `pass^k`: the probability that **all** k independent trials succeed. This is not `pass@k`, which asks whether at least one of k attempts succeeds and suits a setting where a human picks the good one.
+
+Two consequences are worth stating plainly:
+
+- **A cell with fewer than 8 replicates cannot support a consistency claim.** `pass^k` is undefined for k above n, and the board prints `n/a` rather than `0.00`, because unmeasured and always-failing are different findings.
+- **Consistency degrades much faster than the rate.** An agent passing 7 of 10 trials reads as respectable at `pass^1 = 0.70`, and its `pass^8` is exactly zero.
+
+Efficiency is reported on a separate axis and never folded into accuracy: token totals per run, path efficiency against an authored optimal step count, and a compute-normalized `pass_cost^k`.
+
+### Cost of the factor
+
+Accuracy alone makes any expensive intervention look free. `pass_cost^k` discounts consistency by what the arm spent to earn it:
+
+```
+pass_cost^k = pass^k / (1 + log10(total_tokens / baseline_tokens))
+```
+
+Three rules keep it honest:
+
+- **The baseline is named in the record.** The score is a ratio, so it means nothing without saying what it divided by. In an ablation the baseline is the cheaper arm, which is the right comparison: both arms ran the same model on the same task under the same decode settings, so the token ratio is the price of the factor under test and nothing else.
+- **Partial token capture refuses to score.** If any arm reported usage for only some of its runs, the metric returns unavailable with a reason instead of a number. An arm that lost rows looks cheaper than it was, which would bias the result toward whichever cell the instrument failed on. Records written before token capture worked correctly report themselves unavailable rather than dividing by zeroed counts.
+- **Cheap and always wrong is not efficient.** An arm that never passes scores zero at every k regardless of what it cost. The metric discounts success by its price; it does not reward failure for being economical.
+
+Worked example from the verify-tool ablation: the tool-on arm spends 5.89 times the tokens of the tool-off arm, which pulls it from `pass^1 = 0.30` down to `pass_cost^1 = 0.169`. The tool-off arm is the cheapest cell in the experiment and scores 0.000, because it never produced a verified pass. That is the trade stated plainly: the verify tool is not free, and it is still the only arm that works.
+
+### What gets published, and what does not
+
+Every replicate of a reported run is published, including the failures. Dropping the inconvenient ones is how a cell comes to look cleaner than it was, so the per-replicate outcomes ship alongside the aggregate and a reader can check that nothing went missing.
+
+That is a rule about **runs**, not about **jobs**. A job killed at 2 of 8 tasks by a host shutdown or a wall-clock ceiling never reported anything to be selective about. Those are kept on disk under `results/aborted/` as operational history and are not published, because a public record of crashed builds is noise rather than evidence. In both current cases the same work completed properly in another record, so nothing is lost.
+
+A run that **completed** and produced a void, superseded, or irregular result is published, carrying its `irregularity` note. Those are findings about the instrument: the muse-glimmer screen that returned zero tool calls on every run is in the record next to the re-screen that returned 5/8, because the pair is the evidence that the first was an environment fault rather than a property of the model.
+
+## Failure modes, alongside outcomes
+
+The ledger records how a run *ended*. A second axis records how it *failed*, because two runs with the same ending can fail for unrelated reasons:
+
+| Class | Meaning | Detected by |
+|---|---|---|
+| E-TOOL-1 | Parameter or schema violation | Rejected tool arguments |
+| E-TOOL-2 | Policy breach | Blocked write, or a scope violation found by workspace diff |
+| E-TOOL-3 | Intent drift | Redundant repeated tool calls |
+| E-TOOL-4 | Hallucinated tool | A call to something not in the contract |
+
+E-TOOL-3 is a **proxy** and is labeled as one in the code. Proper detection uses a sub-goal progress scorer; this infers drift from identical repeated calls, which catches the observed loop case and will miss drift that varies its arguments while still going nowhere.
+
+## Contamination resistance
+
+Publishing an instrument is what lets someone else check a finding. It is also what lets the next model train on it, and a static suite's scores drift upward as that happens.
+
+`python3 runner/run.py mutate --seed N` derives a fresh instance of every task: user-defined symbols are renamed deterministically from the seed, and authored numeric constants are shifted where a task declares them. The generator is public and any instance is reproducible from its seed, so a reader can regenerate exactly what was run without a fixed text sitting still long enough to be memorized.
+
+Every mutant faces the same gate as the static suite: the mutated start state must fail its verifier and the mutated reference solution must pass. A mutant that cannot clear the gate is rejected and the original stays authoritative, so a mutation can never quietly make a task easier or impossible.
+
+Renaming also yields a contamination detector at no extra cost. Nothing in a mutated instance uses the original spellings, so an agent that writes `def total(` into a workspace whose every reference reads `total_d7342d` is reproducing remembered code rather than reading what is in front of it. Those original names are recorded per instance as tripwires.
+
+### Why constants are authored, not perturbed
+
+Symbol renaming is safe to automate because names carry no arithmetic. Constants are not: a verifier's expected result usually depends on the value, so blind perturbation breaks the ground truth and the gate rejects every candidate. Tasks therefore opt in by declaring exact from/to pairs in `task.json`, which keeps the semantics a human decision.
+
+Two of the eight tasks currently declare them, being the two with boundary values worth moving. `04-round-half-up` shifts its rounding probes from 2.4/2.5/2.6/3.5 to 7.4/7.5/7.6/8.5 with matching expectations, and `07-propagate-tax-param` moves a 10.0 × 2 subtotal to 8.0 × 5 so all three downstream expectations change. The other six tasks declare nothing and get renaming only, which is honest: inventing constants for a task that has none would add churn, not resistance.
+
+Authoring these surfaced two constraints worth stating, because both are easy to get wrong and neither is obvious:
+
+- **A pair must not name an identifier.** Renaming runs first, so a pattern mentioning a function or parameter no longer matches the text by the time constants are applied.
+- **A pair must not touch a constant the algorithm depends on.** Task 04's reference solution is `math.floor(x + 0.5)`. A bare `0.5` pair rewrites the implementation rather than the test inputs, and the correct spec leaves that constant alone precisely because it is the semantics under test.
+
+The gate catches both mistakes rather than trusting the author to avoid them. Feeding it the bare `0.5` pair above rejects the mutant and exits nonzero, which is how the constraint was confirmed rather than assumed.
+
+Control-flow permutation is deliberately not implemented: heavier rewrites risk changing what a task tests, and the gate would reject most of them anyway.
+
+## Environment state layers this suite does not verify
+
+Container-based agent benchmarks verify four state layers: filesystem, database, process lifecycle, and environment variables. This suite verifies the first and scopes out the rest.
+
+Every task is a bounded file edit inside a disposable directory. There is no database, no daemon, and no shell IPC, so process-leak and environment-pollution checks would have nothing to inspect. Filesystem state is diffed by content hash before and after every run, which is the layer this task family actually exercises.
+
+This is a scope decision rather than an oversight. A suite covering OS-level or web agents would need the other three, and this one would need them the moment a task spawns a process.
 
 ## Live agents (Observe Mode, coding surface)
 

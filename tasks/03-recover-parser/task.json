@@ -5,5 +5,7 @@
   "prompt": "parse_ints(s) in parser.py raises on valid input. parse_ints(\"1,2,3\") must return [1, 2, 3] and parse_ints(\"\") must return []. Fix it.",
   "allowed_files": [
     "parser.py"
-  ]
+  ],
+  "optimal_steps": 3,
+  "optimal_steps_note": "Minimum tool calls with run_verify available: one write per allowed file, one verify, one finish. Files are seeded into the prompt, so reads are not required. The verify-off arm has a floor one lower."
 }

@@ -12,6 +12,7 @@ public push. Dependency-free (stdlib only).
 Gitignored, local-only trees (results/live, results/receipts) are skipped, and
 this script skips itself since it necessarily contains the patterns it hunts.
 """
+import fnmatch
 import os
 import re
 import sys
@@ -20,6 +21,14 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SKIP_DIRS = {".git", "__pycache__"}
 SKIP_REL_PREFIXES = ("results/live", "results/receipts")
+# Raw ablation rows keep verifier tracebacks, which carry temp directory paths.
+# They are local evidence, like results/live. The publishable artifact is the
+# ablation.json record next to them, which holds every replicate's outcome.
+SKIP_REL_GLOBS = (
+    "results/ablation/*/runs/*",
+    "results/screens/*/runs/*",
+    "results/mutants/*",
+)
 
 PRIVATE_PATTERNS = [
     r"/Users/",
@@ -28,9 +37,15 @@ PRIVATE_PATTERNS = [
     r"\bMainFrame\b",
     r"\bagent-harness-eval\b",
     r"\bincome-engine\b",
-    r"\bcamerontjs\b",
     r"\bbasic-research-harness\b",
 ]
+# The account name is public and correct inside links to published repos and the
+# Pages site. It is a leak anywhere else, most obviously in a filesystem path.
+# A check that fires on its own correct output gets ignored, so scope it.
+ACCOUNT_ALLOWED = re.compile(
+    r"(https?://)?(github\.com/camerontjs-dot|camerontjs-dot\.github\.io)[\w./#?=-]*"
+)
+ACCOUNT_PATTERN = re.compile(r"\bcamerontjs\b")
 SECRET_PATTERNS = [
     r"sk-ant-[A-Za-z0-9_-]{15}",
     r"xox[bp]-",
@@ -54,6 +69,8 @@ def iter_files():
                 continue
             if rel.startswith(SKIP_REL_PREFIXES):
                 continue
+            if any(fnmatch.fnmatch(rel, pat) for pat in SKIP_REL_GLOBS):
+                continue
             yield rel, os.path.join(root, name)
 
 
@@ -70,6 +87,8 @@ def main():
         for i, line in enumerate(text.splitlines(), 1):
             if priv.search(line):
                 findings.append(("private-path", rel, i, line.strip()[:120]))
+            if ACCOUNT_PATTERN.search(ACCOUNT_ALLOWED.sub("", line)):
+                findings.append(("account-name", rel, i, line.strip()[:120]))
             if sec.search(line):
                 findings.append(("secret", rel, i, "<redacted>"))
             if rel.endswith(".md") and EM_DASH in line:

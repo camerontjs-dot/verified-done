@@ -432,7 +432,7 @@ def run_one_task(
         if not tool_uses:
             # Model stopped without finish; force incomplete
             if not tools.done:
-                tools.finish_status = "incomplete"
+                tools.finish_status = "no_finish_call"
                 tools.finish_note = "model stopped without finish tool"
                 tools.done = True
             break
@@ -453,7 +453,7 @@ def run_one_task(
             break
     else:
         if not tools.done:
-            tools.finish_status = "incomplete"
+            tools.finish_status = "max_turns"
             tools.finish_note = "max turns reached"
             tools.done = True
 

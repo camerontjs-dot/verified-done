@@ -6,5 +6,29 @@
   "allowed_files": [
     "cart.py",
     "checkout.py"
+  ],
+  "optimal_steps": 4,
+  "optimal_steps_note": "Minimum tool calls with run_verify available: one write per allowed file, one verify, one finish. Files are seeded into the prompt, so reads are not required. The verify-off arm has a floor one lower.",
+  "mutable_constants": [
+    {
+      "from": "10.0, \"qty\": 2",
+      "to": "8.0, \"qty\": 5"
+    },
+    {
+      "from": "# subtotal 20.0",
+      "to": "# subtotal 40.0"
+    },
+    {
+      "from": "== 20.0",
+      "to": "== 40.0"
+    },
+    {
+      "from": "== 22.0",
+      "to": "== 44.0"
+    },
+    {
+      "from": "== 25.0",
+      "to": "== 50.0"
+    }
   ]
 }

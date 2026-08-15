@@ -45,6 +45,17 @@ from live_anthropic import (  # noqa: E402
 )
 
 
+# Sampling settings for every local run. Kept in one place so an ablation record
+# can disclose the exact decode settings instead of restating them. Context is
+# deliberately modest: default Ollama contexts can be 128k, which makes each turn
+# of a multi-turn tool loop very slow and memory-heavy on a laptop.
+OLLAMA_OPTIONS = {
+    "temperature": 0.2,
+    "num_predict": 1024,
+    "num_ctx": 8192,
+}
+
+
 def _active_tools(enable_verify: bool) -> list[dict[str, Any]]:
     if enable_verify:
         return TOOLS
@@ -80,13 +91,7 @@ def chat_ollama(
         "stream": False,
         "messages": messages,
         "tools": ollama_tools_schema(tools),
-        # Keep context modest for multi-turn tool loops on local Macs (default Ollama
-        # contexts can be 128k and make each turn extremely slow / memory-heavy).
-        "options": {
-            "temperature": 0.2,
-            "num_predict": 1024,
-            "num_ctx": 8192,
-        },
+        "options": dict(OLLAMA_OPTIONS),
     }
     req = urllib.request.Request(
         host.rstrip("/") + "/api/chat",
@@ -227,6 +232,10 @@ def run_one_task(
     ]
     t0 = time.time()
     raw_log: list[dict[str, Any]] = []
+    # Ollama returns these on every chat response and they were being dropped.
+    # Without them no compute-efficiency metric can be computed for local runs,
+    # which is where most of this harness's evidence comes from.
+    usage_total = {"input_tokens": 0, "output_tokens": 0}
 
     for turn in range(max_turns):
         if tools.done:
@@ -234,11 +243,14 @@ def run_one_task(
         try:
             resp = chat_ollama(host, model, messages, toolset)
         except Exception as exc:
-            tools.finish_status = "incomplete"
+            tools.finish_status = "adapter_error"
             tools.finish_note = f"ollama error: {exc}"
             tools.done = True
             raw_log.append({"error": str(exc)})
             break
+
+        usage_total["input_tokens"] += int(resp.get("prompt_eval_count") or 0)
+        usage_total["output_tokens"] += int(resp.get("eval_count") or 0)
 
         msg = resp.get("message") or {}
         raw_log.append({"turn": turn, "message": msg, "done": resp.get("done")})
@@ -286,12 +298,41 @@ def run_one_task(
             break
     else:
         if not tools.done:
-            tools.finish_status = "incomplete"
+            tools.finish_status = "max_turns"
             tools.finish_note = "max turns"
             tools.done = True
 
     duration_ms = int((time.time() - t0) * 1000)
     claimed = tools.finish_status == "complete"
+
+    # A run that parsed no tool calls at all is the one case where the model's
+    # raw output is the only evidence of what went wrong, and it was previously
+    # discarded: only len(raw_log) survived, as `turns_logged`. That left a
+    # screen reporting a model as incapable when the adapter may simply have
+    # been unable to read its replies. muse-glimmer:30b produced 14 such runs and
+    # none of them could be diagnosed after the fact.
+    #
+    # Kept only in the zero-call case, and truncated. Full transcripts on every
+    # run would be large and are already reproducible; this is a diagnostic
+    # sample, and it lands under runs/ which is gitignored.
+    diagnostic: dict[str, Any] | None = None
+    if not tools.events:
+        turns = []
+        for entry in raw_log[:3]:
+            msg = entry.get("message") or {}
+            turns.append(
+                {
+                    "turn": entry.get("turn"),
+                    "content_head": (msg.get("content") or "")[:800],
+                    "had_native_tool_calls": bool(msg.get("tool_calls")),
+                    "error": entry.get("error"),
+                }
+            )
+        diagnostic = {
+            "reason": "no tool call parsed in any turn",
+            "turns_sampled": turns,
+            "usage_reported": dict(usage_total),
+        }
     traj = summarize_trajectory(tools.events)
     result = grade_workspace(
         task_id,
@@ -306,6 +347,7 @@ def run_one_task(
             "live_run": True,
             "enable_verify_tool": enable_verify_tool,
             "prompt_seeded_files": True,
+            "usage": usage_total,
             "observe": {
                 "host": host,
                 "duration_ms": duration_ms,
@@ -313,6 +355,8 @@ def run_one_task(
                 "finish_note": tools.finish_note,
                 "tool_event_count": len(tools.events),
                 "turns_logged": len(raw_log),
+                "usage": usage_total,
+                "no_tool_call_diagnostic": diagnostic,
             },
         },
     )

@@ -5,5 +5,25 @@
   "prompt": "round_half_up(x) in rounding.py must round .5 upward. The provided regression cases fail because Python's built-in round() uses banker's rounding: round(2.5) is 2. Fix round_half_up so 0.5->1, 2.5->3, 3.5->4, while 2.4->2 and 2.6->3 still hold.",
   "allowed_files": [
     "rounding.py"
+  ],
+  "optimal_steps": 3,
+  "optimal_steps_note": "Minimum tool calls with run_verify available: one write per allowed file, one verify, one finish. Files are seeded into the prompt, so reads are not required. The verify-off arm has a floor one lower.",
+  "mutable_constants": [
+    {
+      "from": "(2.4) == 2",
+      "to": "(7.4) == 7"
+    },
+    {
+      "from": "(2.6) == 3",
+      "to": "(7.6) == 8"
+    },
+    {
+      "from": "(2.5) == 3",
+      "to": "(7.5) == 8"
+    },
+    {
+      "from": "(3.5) == 4",
+      "to": "(8.5) == 9"
+    }
   ]
 }

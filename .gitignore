@@ -2,6 +2,29 @@ __pycache__/
 *.pyc
 results/receipts/
 results/live/
+# Raw ablation rows carry verifier tracebacks with temp paths. The publishable
+# artifact is ablation.json, which records every replicate's outcome.
+results/ablation/*/runs/
+results/screens/*/runs/
+# Mutated task instances are generated, not authored. Any instance is
+# reproducible from its seed, and committing them would republish the very text
+# the mutation exists to keep out of training data.
+results/mutants/
+# Jobs that were interrupted before they measured anything: a host shutdown, a
+# wall-clock ceiling, a kill. They are kept on disk as operational history and
+# not published.
+#
+# The line is between a run and a job. Every replicate of a run that gets
+# reported is published, including the ones that failed, because dropping those
+# is how a cell gets to look cleaner than it was. A job that was killed at 2 of
+# 8 tasks reported nothing to be selective about, and in both current cases the
+# same work completed properly in another record. Publishing crashed jobs is not
+# more honest, only noisier.
+#
+# A run that COMPLETED and produced a void or superseded result is published,
+# with its irregularity note. That is a finding about the instrument and belongs
+# in the record.
+results/aborted/
 .DS_Store
 # Live JSON can include model request ids; keep local-only unless curating a board
 # results/live/ is retained on disk for CROSS_STACK_BOARD; do not push secrets

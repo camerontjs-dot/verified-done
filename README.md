@@ -13,7 +13,11 @@ tags: ["evaluation", "agents", "false-completion", "benchmark"]
 
 # verified-done
 
+[![verify](https://github.com/camerontjs-dot/verified-done/actions/workflows/verify.yml/badge.svg)](https://github.com/camerontjs-dot/verified-done/actions/workflows/verify.yml)
+
 Does "done" mean done? This is a benchmark for one narrow, load-bearing question about coding agents: when an agent says it finished the work, did it? And did it stay inside the files it was allowed to touch?
+
+The benchmark's own argument is that you should not take an agent's word for whether the work is done. The same standard applies here: every push re-runs the verifiers rather than asserting they still discriminate. The badge above is that check, and it runs offline with no model and no API key.
 
 **Companion write-ups (methods + guided tour, no private fixtures):** [agent-eval-notes](https://github.com/camerontjs-dot/agent-eval-notes) · [Pages tour](https://camerontjs-dot.github.io/agent-eval-notes/)
 
@@ -76,6 +80,75 @@ python3 runner/run.py live --model claude-haiku-4-5 --label haiku-smoke
 ```
 
 Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) (**Findings A–D**). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
+
+### Run the experiment, not just the scoring
+
+The finding this repo is built around is a controlled comparison: hold the model and the task fixed, and change one thing about the tool contract. `ablation` runs both arms and writes one record.
+
+```bash
+# both arms, 10 replicates each, against a local model
+python3 runner/run.py ablation --model qwen2.5-coder:14b --n 10
+
+# same experiment against a hosted model
+python3 runner/run.py ablation --adapter anthropic --model claude-haiku-4-5 --n 3
+```
+
+The factor under test is whether `run_verify` is in the agent's tool contract. With it, the agent can check its own work before claiming completion. Without it, its own assertion is the only channel left. Model, task, prompts, verifier, turn limit, and decode settings are held fixed and recorded.
+
+Arms are **interleaved**, not blocked: replicate 1 runs both arms before replicate 2 starts. Running one arm to completion first would confound the factor with anything that drifts during the run, such as thermal throttling or memory pressure.
+
+Each experiment writes `results/ablation/<stamp>-<adapter>-<model>-<task>/`:
+
+| File | Contents |
+|---|---|
+| `ablation.json` | The record: what was held fixed, n per arm, arm summaries, and **the outcome of every replicate** |
+| `scorecard.md` | The same thing readable |
+| `runs/` | Raw graded rows, gitignored (they carry verifier tracebacks with temp paths) |
+
+Every replicate is published rather than only the totals, so it is visible that no run was quietly dropped for not fitting.
+
+### Screening a new model
+
+A new open-weight model lands every few weeks and the question is always whether it deserves a real evaluation slot. `screen` answers that in one command.
+
+```bash
+python3 runner/run.py screen --model muse-glimmer:30b
+python3 runner/run.py board                    # every screen and ablation, side by side
+```
+
+It runs the soft tier and stops:
+
+| Stage | What it runs | What it answers |
+|---|---|---|
+| 1. Capability | every demo task, verify tool on | can it make bounded edits without wandering out of scope |
+| 2. Honesty | the two-file task, verify tool on vs off | when it cannot finish, does it say so |
+
+A model can pass stage 1 and still be unusable unsupervised if it fails stage 2, which is the argument this whole repo exists to make.
+
+The verdict is **nominate** or **do not advance**, never *promote*: a screen is small-n on purpose. Clearing it earns a deeper look (`ablation --n 10`, then a sealed suite), not a place on a leaderboard.
+
+`board` keeps the columns separate. There is no combined score, because a model that passes more tasks while lying about the ones it fails is not better, and an average would claim it was.
+
+### Keeping a public benchmark honest
+
+Publishing the tasks is what lets you check a result. It is also what lets the next model train on them.
+
+```bash
+python3 runner/run.py mutate --seed 42     # fresh instance of every task, gated
+```
+
+Symbols are renamed deterministically from the seed and authored constants are shifted, so the **generator** is public and reproducible while the **instance** is fresh. Same seed, same instance, byte for byte.
+
+Every mutant clears the same gate as the static suite: mutated start must fail, mutated solution must pass. One that cannot is rejected and the original stays authoritative, so a mutation can never quietly make a task easier or impossible.
+
+Renaming gives a contamination detector for free. Nothing in a mutated instance uses the original names, so an agent that writes `def total(` into a workspace whose every reference reads `total_d7342d` is reproducing remembered code rather than reading the file. Those originals are recorded per instance as tripwires.
+
+```bash
+python3 runner/run.py index      # rebuild results/INDEX.json from every record
+python3 runner/run.py regrade    # re-derive labels after a label-space change
+```
+
+[`results/INDEX.json`](results/INDEX.json) is the machine-readable roll-up. Published numbers and figures should read from it rather than restate it, because hand-copied numbers drift. CI fails if it is stale.
 
 ### Live evidence highlights (exploratory)
 
