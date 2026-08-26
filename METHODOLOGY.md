@@ -4,15 +4,9 @@ How a run is scored, and why the scoring is built the way it is.
 
 ## Lab reports for campaigns
 
-Cell-level JSON under `results/live/` is the receipt. Decision-bearing **campaigns** (ablations, honesty smokes, multi-model boards) also get a researcher-style lab report:
+Cell-level JSON under `results/live/` is the local receipt. That tree is gitignored: cloud and Ollama traces are not bit-reproducible and can name private paths.
 
-```bash
-bin/lab-report scaffold --project verified-done \
-  --title "verify-tool-ablation" \
-  --question "..." --decision "..." --study-type exploratory
-```
-
-Decision-bearing runs get a lab report in the private workspace. This repo keeps the scrubbed findings in `results/LIVE_EVIDENCE.md`, and machine-readable outcomes in `results/INDEX.json`.
+Decision-bearing campaigns also get a researcher-style lab report in the private workspace. This public repo keeps the scrubbed findings in [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) and the machine-readable roll-up in [`results/INDEX.json`](results/INDEX.json).
 
 ## The unit of measurement
 
@@ -110,6 +104,28 @@ That is a rule about **runs**, not about **jobs**. A job killed at 2 of 8 tasks 
 
 A run that **completed** and produced a void, superseded, or irregular result is published, carrying its `irregularity` note. Those are findings about the instrument: the muse-glimmer screen that returned zero tool calls on every run is in the record next to the re-screen that returned 5/8, because the pair is the evidence that the first was an environment fault rather than a property of the model.
 
+## Reasoning models, and what the harness must not throw away
+
+Ollama returns a reasoning model's work in a separate `thinking` field and leaves `content` empty. A harness that reads only `content` therefore records a blank assistant turn and discards the model's reasoning before the next request.
+
+That is not a cosmetic loss. The model arrives at the next turn with no record of what it just worked out and starts again, so the turn budget drains into repetition. This harness did exactly that until 2026-08-15, and the resulting loops were published as intent drift, a failure attributed to the model.
+
+Four of six local models tested here are affected, and all four return an empty `content`. Two are not: `qwen2.5-coder:14b` and `qwen3-coder:30b`.
+
+The adapter now:
+
+- preserves `thinking` on the assistant turn, and passes native `tool_calls` back with it
+- nudges only a model that produced nothing at all. A model that reasoned but has not yet acted is mid-thought, and a format instruction discards that thought and restarts it, which is the loop the harness used to create
+- records `thinking_turns`, `no_call_turns`, and `is_reasoning_model`, so the harness's own turn tax appears in the record rather than as a model that could not finish
+
+### Two silent failure modes this exposed
+
+**Output truncation.** `num_predict` caps each response. On a reasoning model the tool call comes after the reasoning, so a truncated turn looks identical to a model that declined to act. Ollama reports this as `done_reason: "length"` and it is now counted as `truncated_turns`. The first run under the new instrumentation found six.
+
+**Context overflow.** Preserving `thinking` adds tokens to every turn, so the fix for the first failure mode can feed a second one. `context_pressure` records the largest prompt as a fraction of `num_ctx`; approaching 1.0 means the run was dropping its own history.
+
+The general rule: a harness assumption about response shape is a held-fixed factor like any other, and one that suits a subset of models is not neutral. It quietly penalises the rest, and the penalty is indistinguishable from incapacity unless it is measured.
+
 ## Failure modes, alongside outcomes
 
 The ledger records how a run *ended*. A second axis records how it *failed*, because two runs with the same ending can fail for unrelated reasons:
@@ -170,7 +186,7 @@ Ablation: `--no-verify-tool` hides `run_verify` (self-verify path flags do not a
 
 Offline `grade` of a hand-built workspace remains supported for fixture work. Capability and graduation claims should prefer live receipts (see root `HARNESS.md`).
 
-Cross-stack board: [`results/live/CROSS_STACK_BOARD.md`](results/live/CROSS_STACK_BOARD.md).
+The live cross-stack board stays local under `results/live/`. The public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md).
 
 ## Authoring standard
 

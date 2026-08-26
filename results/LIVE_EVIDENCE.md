@@ -112,6 +112,68 @@ The verify tool costs nearly six times the tokens of going without it. `pass_cos
 
 Records: `results/ablation/20260813T013646Z-*` (0.32.7) and `20260813T133931Z-*` (0.32.9). The older record's cost block reports itself unavailable rather than inventing a baseline out of zeroed token counts.
 
+## Finding F: the harness was mismeasuring every reasoning model (2026-08-15)
+
+The largest correction in this file, and it is about the instrument rather than any model.
+
+Ollama returns a reasoning model's work in a separate `thinking` field and leaves `content` empty. The adapter appended only `content`, so each turn wrote a blank assistant message, threw the reasoning away, and followed it with an instruction to reply with a tool call. The model then re-derived its plan from nothing, every turn.
+
+Four of six local models are affected. All four return an empty `content`:
+
+| Model | reasoning field | affected |
+|-------|----------------:|----------|
+| `qwen3.5:9b` | 120 chars | yes |
+| `qwen3:14b` | 436 chars | yes |
+| `gemma4:12b` | 105 chars | yes |
+| `muse-glimmer:30b` | 203 chars | yes |
+| `qwen2.5-coder:14b` | none | no |
+| `qwen3-coder:30b` | none | no |
+
+**Findings A, D and E are unaffected.** They rest on `qwen2.5-coder:14b` and on Haiku through a different adapter, neither of which is a reasoning model.
+
+### What the fix changed
+
+Re-running Finding C's exact design with reasoning preserved and nothing else altered:
+
+| Arm | before | after |
+|-----|--------|-------|
+| no `run_verify` | 0 pass, 0 FC, 10/10 no claim | 0 pass, **10/10 false completion** |
+| with `run_verify` | 0 pass, 0 FC, 10/10 no claim | 1 pass, 0 FC, 9/10 no claim |
+
+Before: 13 tool calls, never claims, about 509s a run. After: 7 calls, `finish(complete)` every time, about 120s. Half the actions and a quarter of the time, because the model stopped repeating work it had already reasoned through.
+
+So the intent-drift diagnosis is withdrawn. A model whose plan is deleted after every turn and is then told to hurry up will repeat itself; that was our loop, not its drift.
+
+### What replaced it
+
+`qwen3:14b`, measured on the fixed instrument, gives the model-dependence result that Finding C was wrongly cited for:
+
+| Model | no tool | with tool |
+|-------|--------:|----------:|
+| `qwen2.5-coder:14b` | 20/20 FC | 1/20 FC |
+| `qwen3:14b` | 10/10 FC | **9/10 FC** |
+
+Every one of qwen3:14b's ten tool-on runs called `run_verify` exactly once, and nine still claimed a completion the verifier contradicted. Using a checker is not the same as heeding one.
+
+### The other two re-runs
+
+`gemma4:12b` reversed as completely as qwen3.5 did. Before the fix its tool arm never reached a claim; after it, the cell is comparable and the flip is total:
+
+| Arm | n | Verified pass | False completion |
+|-----|--:|--------------:|-----------------:|
+| With `run_verify` | 3 | **3/3** | 0/3 |
+| No `run_verify` | 3 | 0/3 | **3/3** |
+
+Two caveats sit on that. Twenty-one turns across six runs were cut off at the `num_predict` ceiling, and `no_call_turns` is also exactly twenty-one: every turn that failed to produce a tool call was a truncated one. And two of the three tool-on runs did the work, passed the verifier, and still ended on `max_turns` without calling `finish`, so the work was completed three times but reported once.
+
+`muse-glimmer:30b` produced nothing to report. All six runs returned empty messages on every turn: zero prompt tokens, no content, no thinking, no tool calls, no error. It is the second time this model has done that here, and a direct probe plus one full screen both worked, so the fault is intermittent and unexplained. Roughly two of three sessions with this model on this host hit it.
+
+That failure used to land as `max_turns` and read as a model that never acted, which is how it produced a clean-looking rejection twice. The adapter now classifies an all-empty run as an infrastructure failure so those runs leave the denominator instead of counting as behaviour.
+
+### Instrumentation added with the fix
+
+Runs now record `thinking_turns`, `no_call_turns`, `is_reasoning_model`, `truncated_turns`, and `context_pressure`. The first run under it found six turns hitting the `num_predict` output cap, a failure mode that had been invisible: a truncated turn on a reasoning model suppresses the tool call and looks exactly like a model choosing not to act.
+
 ## What this is not
 
 Small n, exploratory, not a ranking. Cloud runs are not bit-reproducible. The Ollama tool loop is not the same harness as a full IDE agent. These probes demonstrate that the harness runs on real hosted and local models and that the honesty signal is separable from the pass rate. They are not capability or production claims.
