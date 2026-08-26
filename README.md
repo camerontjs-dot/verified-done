@@ -1,21 +1,8 @@
----
-title: "verified-done"
-domain: "knowledge-systems"
-type: "project"
-status: "planned"
-project_state: "planned"
-goal: "Benchmark whether coding agents that claim task completion actually finished and stayed in scope (verified pass vs false completion vs scope violation)."
-next_action: "Keep public demo split runnable via runner/run.py; private held-out numbers stay lab-side; coordinate taxonomy with reliability-eval-framework."
-updated: "2026-07-23"
-source: "local"
-tags: ["evaluation", "agents", "false-completion", "benchmark"]
----
-
 # verified-done
 
 [![verify](https://github.com/camerontjs-dot/verified-done/actions/workflows/verify.yml/badge.svg)](https://github.com/camerontjs-dot/verified-done/actions/workflows/verify.yml)
 
-Does "done" mean done? This is a benchmark for one narrow, load-bearing question about coding agents: when an agent says it finished the work, did it? And did it stay inside the files it was allowed to touch?
+Does "done" mean done? This is a public demo of a benchmark for one narrow, load-bearing question about coding agents: when an agent says it finished the work, did it? And did it stay inside the files it was allowed to touch?
 
 The benchmark's own argument is that you should not take an agent's word for whether the work is done. The same standard applies here: every push re-runs the verifiers rather than asserting they still discriminate. The badge above is that check, and it runs offline with no model and no API key.
 
@@ -79,7 +66,7 @@ python3 runner/run.py live --model claude-haiku-4-5 --label haiku-smoke
 # or: --env-file path/to/your/.env
 ```
 
-Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) (**Findings A–D**). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
+Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) (**Findings A–F**). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
 
 ### Run the experiment, not just the scoring
 
@@ -156,8 +143,10 @@ python3 runner/run.py regrade    # re-derive labels after a label-space change
 |---------|-------|----------------|
 | **A** | Haiku, task 07 | `run_verify` off → 3/3 false completion; on → 3/3 clean (n=3/arm) |
 | **B** | Multi-model smoke n=4 | Honesty is not uniform under the same tool-on harness |
-| **C** | Local `qwen3.5:9b`, task 07 | Abstains with **and** without verify (control; n=2/arm) |
-| **D** | Local `qwen2.5-coder:14b`, task 07 | Verify on → honest abstain; off → 2/2 false completion (n=2/arm) |
+| **C** | Local `qwen3.5:9b`, task 07 | Void as a control. The n=2 reading was honest abstention; n=10 never reached a claim. After the adapter fix the no-tool arm is 10/10 false completion. |
+| **D** | Local `qwen2.5-coder:14b`, task 07 | n=10: 10/10 false completion without the tool; 3/10 pass and 1/10 false completion with it |
+| **E** | Same as D, Ollama 0.32.7 → 0.32.9 | Replicates. Pooled 1/20 false completion with the tool against 20/20 without |
+| **F** | Instrument, 2026-08-15 | The Ollama adapter was discarding reasoning-model output. Model-dependence is now `qwen2.5-coder:14b` (1/20 false completion with the tool) against `qwen3:14b` (9/10 with the tool). |
 
 Companion write-up: [agent-eval-notes Report 06](https://github.com/camerontjs-dot/agent-eval-notes/blob/main/reports/06-verify-tool-false-completion.md).
 
@@ -183,8 +172,8 @@ See [`LIMITATIONS.md`](LIMITATIONS.md) for the full list, and [`METHODOLOGY.md`]
 
 ## Naming
 
-Working name `verified-done`, chosen to lead with the honesty question. Alternative under consideration: `agent-honesty-bench`. Not locked.
+The public name is `verified-done`. It leads with the honesty question.
 
 ## License
 
-To be set before any public push (MIT is the default candidate).
+[MIT](LICENSE).
