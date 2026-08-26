@@ -236,6 +236,21 @@ def run_one_task(
     # Without them no compute-efficiency metric can be computed for local runs,
     # which is where most of this harness's evidence comes from.
     usage_total = {"input_tokens": 0, "output_tokens": 0}
+    # Turn accounting, so the cost of the harness's own behaviour is visible in
+    # the record rather than showing up as a model that could not finish.
+    thinking_turns = 0
+    no_call_turns = 0
+    # Two silent failure modes the harness cannot otherwise see.
+    #
+    # A response that stops on `length` hit num_predict and was cut off. On a
+    # reasoning model the tool call comes after the reasoning, so a truncated
+    # turn looks exactly like a model that declined to act.
+    #
+    # Prompt size approaching num_ctx means older context is being dropped.
+    # That risk rose when this adapter started preserving `thinking`, so the fix
+    # for one failure mode can feed another if it goes unmeasured.
+    truncated_turns = 0
+    max_prompt_tokens = 0
 
     for turn in range(max_turns):
         if tools.done:
@@ -249,27 +264,54 @@ def run_one_task(
             raw_log.append({"error": str(exc)})
             break
 
-        usage_total["input_tokens"] += int(resp.get("prompt_eval_count") or 0)
+        prompt_tokens = int(resp.get("prompt_eval_count") or 0)
+        usage_total["input_tokens"] += prompt_tokens
         usage_total["output_tokens"] += int(resp.get("eval_count") or 0)
+        max_prompt_tokens = max(max_prompt_tokens, prompt_tokens)
+        if resp.get("done_reason") == "length":
+            truncated_turns += 1
 
         msg = resp.get("message") or {}
         raw_log.append({"turn": turn, "message": msg, "done": resp.get("done")})
-        messages.append({"role": "assistant", "content": msg.get("content") or ""})
+
+        # Record the assistant turn faithfully, reasoning included.
+        #
+        # Reasoning models return their work in a separate `thinking` field and
+        # leave `content` empty. Appending only `content` wrote an empty
+        # assistant turn and threw the reasoning away, so the model arrived at
+        # the next turn with no record of what it had just worked out and began
+        # again. On muse-glimmer:30b that cost more than half the turn budget:
+        # 12 turns yielded 4 to 5 tool calls, and the screen read the shortfall
+        # as the model being unable to finish.
+        thinking = msg.get("thinking") or ""
+        content = msg.get("content") or ""
+        assistant_turn: dict[str, Any] = {"role": "assistant", "content": content}
+        if thinking:
+            assistant_turn["thinking"] = thinking
+            thinking_turns += 1
+        if msg.get("tool_calls"):
+            assistant_turn["tool_calls"] = msg["tool_calls"]
+        messages.append(assistant_turn)
 
         calls = parse_tool_calls(msg)
         if not calls:
-            # try one repair nudge
-            messages.append(
-                {
-                    "role": "user",
-                    "content": (
-                        "Respond with ONLY a JSON tool call, e.g. "
-                        '{"name":"read_file","arguments":{"path":"file.py"}} '
-                        "or finish with "
-                        '{"name":"finish","arguments":{"status":"complete","note":"..."}}'
-                    ),
-                }
-            )
+            no_call_turns += 1
+            # Nudge only a model that produced nothing usable. A model that
+            # reasoned but has not yet acted is mid-thought, and interrupting it
+            # with a format instruction discards that thought and restarts it.
+            # That is the loop this adapter used to create.
+            if not thinking:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "Respond with ONLY a JSON tool call, e.g. "
+                            '{"name":"read_file","arguments":{"path":"file.py"}} '
+                            "or finish with "
+                            '{"name":"finish","arguments":{"status":"complete","note":"..."}}'
+                        ),
+                    }
+                )
             continue
 
         for call in calls:
@@ -301,6 +343,22 @@ def run_one_task(
             tools.finish_status = "max_turns"
             tools.finish_note = "max turns"
             tools.done = True
+
+    # A backend that answered with nothing at all did not produce a trial.
+    #
+    # Any real turn costs prompt tokens, so zero across every turn means the
+    # server accepted the requests and returned empty messages: no content, no
+    # thinking, no tool calls, and no error to catch. Left alone this lands as
+    # `max_turns` and reads as a model that never acted, which is how
+    # muse-glimmer:30b twice produced a clean-looking rejection while measuring
+    # nothing. Classifying it here puts those runs outside the denominator with
+    # every other infrastructure failure.
+    if raw_log and max_prompt_tokens == 0 and not tools.events:
+        tools.finish_status = "adapter_error"
+        tools.finish_note = (
+            "backend returned empty responses for all %d turns "
+            "(zero prompt tokens, no content, no tool calls)" % len(raw_log)
+        )
 
     duration_ms = int((time.time() - t0) * 1000)
     claimed = tools.finish_status == "complete"
@@ -356,6 +414,21 @@ def run_one_task(
                 "tool_event_count": len(tools.events),
                 "turns_logged": len(raw_log),
                 "usage": usage_total,
+                # A model that spends most of its budget reasoning has not
+                # failed the task; it has been charged for thinking. Reporting
+                # this separates the two.
+                "thinking_turns": thinking_turns,
+                "no_call_turns": no_call_turns,
+                "is_reasoning_model": thinking_turns > 0,
+                "truncated_turns": truncated_turns,
+                "max_prompt_tokens": max_prompt_tokens,
+                "num_ctx": OLLAMA_OPTIONS["num_ctx"],
+                "num_predict": OLLAMA_OPTIONS["num_predict"],
+                # Fraction of the context window the largest prompt used. Near
+                # 1.0 means the run was dropping its own history.
+                "context_pressure": round(
+                    max_prompt_tokens / OLLAMA_OPTIONS["num_ctx"], 3
+                ) if OLLAMA_OPTIONS["num_ctx"] else None,
                 "no_tool_call_diagnostic": diagnostic,
             },
         },

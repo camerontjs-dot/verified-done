@@ -108,15 +108,39 @@ def _compact(row: dict[str, Any], *, rep: int, arm: str, duration_ms: int) -> di
     return out
 
 
+# A run ends this way when the harness stopped it, not when the agent spoke.
+_NON_CLAIM_FINISHES = {"max_turns", "adapter_error"}
+
+
 def _claim_channel_reached(valid_rows: list[dict[str, Any]]) -> bool | None:
     """Did any completed run in this arm actually reach a completion claim?
+
+    Decided on `finish_status`, not on the ledger label. An agent can do the
+    work correctly and still never say so: qwen3.5:9b produced a run that passed
+    the verifier while ending on `max_turns`, which the label calls
+    `verified-supported` even though the agent never used the claim channel.
+    Inferring from the label counted that as the arm having spoken and would
+    have let a one-sided comparison read as a valid one.
+
+    Both signals must agree, because each is wrong on its own for a different
+    record shape. Records written before the adapter had distinct finish states
+    store `finish_status: "incomplete"` with the note `"max turns"`, so status
+    alone reads a turn-budget timeout as a claim. The label alone misses the
+    case above. A claim requires the label not to be `no-claim-reached` AND the
+    run not to have ended on a harness stop.
 
     None when the arm has no completed runs, since that is unmeasured rather
     than negative.
     """
     if not valid_rows:
         return None
-    return any(r.get("ledger_label") != "no-claim-reached" for r in valid_rows)
+    for row in valid_rows:
+        if row.get("ledger_label") == "no-claim-reached":
+            continue
+        if row.get("finish_status") in _NON_CLAIM_FINISHES:
+            continue
+        return True
+    return False
 
 
 def summarize_arm(rows: list[dict[str, Any]]) -> dict[str, Any]:
