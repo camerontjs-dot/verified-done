@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from ledger import summarize_trajectory
+from specimens import retain as retain_specimen
 
 import importlib
 
@@ -433,6 +434,9 @@ def run_one_task(
             },
         },
     )
+    # Keep the code before the workspace goes. What the agent wrote is the
+    # specimen; the verdict alone was all that used to survive.
+    retain_specimen(task_id, workspace, result, stamp=_utc_stamp())
     shutil.rmtree(workspace, ignore_errors=True)
     return result
 

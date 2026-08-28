@@ -23,6 +23,7 @@ from typing import Any
 
 # runner/ is on sys.path when imported from run.py
 from ledger import summarize_trajectory  # path score applied in grade_workspace
+from specimens import retain as retain_specimen
 
 # Prefer already-loaded __main__ (python3 runner/run.py live) to avoid a second import.
 import importlib
@@ -493,6 +494,8 @@ def run_one_task(
             "prompt_seeded_files": True,
         },
     )
+    # Keep the code before the workspace goes; see runner/specimens.py.
+    retain_specimen(task_id, workspace, result, stamp=_utc_stamp())
     shutil.rmtree(workspace, ignore_errors=True)
     return result
 

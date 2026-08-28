@@ -104,6 +104,36 @@ That is a rule about **runs**, not about **jobs**. A job killed at 2 of 8 tasks 
 
 A run that **completed** and produced a void, superseded, or irregular result is published, carrying its `irregularity` note. Those are findings about the instrument: the muse-glimmer screen that returned zero tool calls on every run is in the record next to the re-screen that returned 5/8, because the pair is the evidence that the first was an environment fault rather than a property of the model.
 
+## Retained specimens: the byproduct corpus
+
+Every live run produces a piece of AI-written code that a deterministic verifier has already ruled on, next to a reference solution stating what correct looks like. That is a labelled defect specimen, and until 2026-08-27 the harness deleted it. 118 runs had been scored and discarded, 107 of them failures.
+
+Human-written defect corpora (QuixBugs, BugsInPy) are typos and off-by-ones, which is not what models get wrong. A corpus of what models actually get wrong has to be built, and this suite was already producing one as exhaust.
+
+`runner/specimens.py` copies each scored workspace out before it is removed: the tree, a `diff.patch` against the task's starting state, and a `specimen.json` carrying the verifier's labels. The patch is what is actually readable: exactly what the model changed, with everything it left alone removed. Retention never raises into the caller: losing a specimen must not fail a run that otherwise succeeded, or the corpus becomes a reliability risk for the bench it is a byproduct of.
+
+### Passes are retained, and they are not filler
+
+A defect corpus with no negative class cannot distinguish "this layer detects defects" from "this layer rejects everything". The passing runs are what makes a false-rejection rate measurable at all. Keeping only the failures would build a corpus that can only ever confirm.
+
+### The classes are the ledger's, not a second taxonomy
+
+Specimens file under the [ledger label](LEDGER.md) the run already carries, rather than under a classifier that re-derives one. A second source of truth about what a run was is a way for the corpus and the ledger to disagree silently.
+
+This matters most at the boundary the ledger already draws and a pass/fail split erases. `honestly-abstained` is a *positive* outcome, because the agent worked, could not finish, and said so. Filing it as a defect would make the corpus penalise the one behaviour this project argues for. `no-claim-reached` is a run that never reached its claim channel: a turn budget running out is not a defect, and crediting it as abstention grants a virtue nothing demonstrated. Adapter errors separate again as `not-assessable`, because an infrastructure failure measured nothing about a model and must be countable and excludable rather than summed into a defect rate.
+
+Finding C was voided on 2026-08-13 for exactly this reason, so the distinction is pinned by test rather than by convention.
+
+### Ground truth is `verify_pass`, not the directory name
+
+The specimen directories carry ledger classes, and the ledger records what the agent did rather than whether the code works. `false-completion` and `honestly-abstained` both contain programs the verifier rejected, separated only by whether the agent claimed completion. Only `pass` means correct code.
+
+A consumer treating the path as the label drops every defect the agent was honest about, and counts a detector that correctly flags one as a false positive. That inverts the false-rejection rate, which is the metric such a consumer is most likely to have committed a ceiling on.
+
+### Not published by default
+
+`results/specimens/` is gitignored, on the same argument as `results/mutants/`: a public corpus of task solutions is a public corpus of task solutions, and this bench's whole claim is that a memorized instrument is not an instrument. Releasing it is a deliberate act with its own contamination note, not a side effect of running the suite.
+
 ## Reasoning models, and what the harness must not throw away
 
 Ollama returns a reasoning model's work in a separate `thinking` field and leaves `content` empty. A harness that reads only `content` therefore records a blank assistant turn and discards the model's reasoning before the next request.

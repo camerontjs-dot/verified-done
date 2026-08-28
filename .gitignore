@@ -25,6 +25,13 @@ results/mutants/
 # with its irregularity note. That is a finding about the instrument and belongs
 # in the record.
 results/aborted/
+# Retained agent workspaces (runner/specimens.py). Kept locally as the
+# AI-defect corpus; not published by default, for the same reason as
+# results/mutants/ above: a public corpus of task solutions is a public corpus of
+# task solutions, and a memorized instrument is not an instrument. Releasing it
+# is a deliberate act with its own contamination note, not a side effect of
+# running the suite.
+results/specimens/
 .DS_Store
 # Live JSON can include model request ids; keep local-only unless curating a board
 # results/live/ is retained on disk for CROSS_STACK_BOARD; do not push secrets
