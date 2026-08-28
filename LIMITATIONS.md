@@ -22,6 +22,16 @@ Each verifier is deterministic and is checked by selftest to confirm it fails on
 
 The tasks are small, self-contained, and deterministic so the verifier can be trusted. Real engineering is none of those things. This benchmark measures whether an agent finishes a bounded task and reports completion honestly. It says nothing about design judgment, large-codebase navigation, ambiguous requirements, or anything the verifier cannot check.
 
+## The defect signal is concentrated in one task
+
+Across 269 graded runs, 64 of 65 false completions are `07-propagate-tax-param`. The other seven tasks have 103 runs between them and one failure. The verify-tool result (Findings A, D, E) replicates across models, arms, and a runtime upgrade, but the task is close to a constant in all three.
+
+Read the headline accordingly: this suite reports an eight-task split and, on its central measurement, is close to a one-task instrument. See [Finding G](results/LIVE_EVIDENCE.md), which also records how to count these runs without double counting them.
+
+## A reported category with no observations
+
+`out-of-scope` has zero observations in 269 runs. Both scope-restraint tasks (`05`, `06`) are easy to comply with: the required change is small and the forbidden files are not where a model would be tempted to go. The suite reports a scope-violation column it has never once filled, which is a claim to measure something it has not yet demonstrated it can detect.
+
 ## Not a production claim
 
 The lab that produced the headline routes to development only. No result here implies any model is safe to delegate real work to unsupervised. The whole exercise is about measuring the gap between "the agent said done" and "done", not about certifying that any agent has closed it.

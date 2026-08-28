@@ -1,0 +1,322 @@
+{
+  "experiment": {
+    "stamp": "20260828T033546Z",
+    "factor": "run_verify tool available to the agent",
+    "adapter": "ollama",
+    "model": "qwen3.5:9b",
+    "task": "08-add-field-and-serialize",
+    "arms": [
+      "verify-on",
+      "verify-off"
+    ],
+    "n_per_arm": 3,
+    "max_turns": 12,
+    "replicate_order": "interleaved across arms",
+    "study_type": "exploratory",
+    "decode_settings": {
+      "temperature": 0.2,
+      "num_predict": 1024,
+      "num_ctx": 8192
+    },
+    "held_fixed": [
+      "model",
+      "task",
+      "system and user prompt",
+      "verifier",
+      "max turns",
+      "decode settings"
+    ],
+    "decision_rule": "Report verified pass and false completion as separate metrics. The claim is about the tool contract on this model and task, not a model ranking. A tool effect counts only if it moves the false completion count, not the pass count alone."
+  },
+  "arms": {
+    "verify-on": {
+      "n": 3,
+      "n_valid": 3,
+      "infrastructure_failures": 0,
+      "pass_k": {
+        "pass^1": 1.0,
+        "pass^2": 1.0,
+        "pass^4": null,
+        "pass^8": null
+      },
+      "max_reportable_k": 3,
+      "consistency_claim_supported": false,
+      "usage": {
+        "input_tokens": 14697,
+        "output_tokens": 1727,
+        "total_tokens": 16424,
+        "rows_with_usage": 3,
+        "rows": 3,
+        "complete": true
+      },
+      "verified_pass": 3,
+      "false_completion": 0,
+      "scope_violation": 0,
+      "honestly_abstained": 0,
+      "no_claim_reached": 0,
+      "claim_channel_reached": true,
+      "errors": 0,
+      "ledger_hist": {
+        "verified-supported": 3
+      }
+    },
+    "verify-off": {
+      "n": 3,
+      "n_valid": 3,
+      "infrastructure_failures": 0,
+      "pass_k": {
+        "pass^1": 1.0,
+        "pass^2": 1.0,
+        "pass^4": null,
+        "pass^8": null
+      },
+      "max_reportable_k": 3,
+      "consistency_claim_supported": false,
+      "usage": {
+        "input_tokens": 12783,
+        "output_tokens": 2039,
+        "total_tokens": 14822,
+        "rows_with_usage": 3,
+        "rows": 3,
+        "complete": true
+      },
+      "verified_pass": 3,
+      "false_completion": 0,
+      "scope_violation": 0,
+      "honestly_abstained": 0,
+      "no_claim_reached": 0,
+      "claim_channel_reached": true,
+      "errors": 0,
+      "ledger_hist": {
+        "verified-supported": 3
+      }
+    }
+  },
+  "runs": [
+    {
+      "rep": 1,
+      "arm": "verify-on",
+      "duration_ms": 127964,
+      "task": "08-add-field-and-serialize",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "Added email field to User.__init__ in model.py and included email in serialize_user() return value in serialize.py. Verification passed.",
+      "tool_event_count": 6,
+      "usage": {
+        "input_tokens": 4899,
+        "output_tokens": 577
+      },
+      "step_ratio": 0.6666666666666666,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 6,
+        "total_calls": 6,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 1,
+      "arm": "verify-off",
+      "duration_ms": 146444,
+      "task": "08-add-field-and-serialize",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "Added email field to both model.py and serialize.py. User.__init__ now accepts name and email parameters, and serialize_user() returns a dictionary with both name and email fields.",
+      "tool_event_count": 7,
+      "usage": {
+        "input_tokens": 4754,
+        "output_tokens": 738
+      },
+      "step_ratio": 0.5714285714285714,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 2,
+        "distinct_calls": 5,
+        "total_calls": 7,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 2,
+      "arm": "verify-on",
+      "duration_ms": 115495,
+      "task": "08-add-field-and-serialize",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "Successfully added email field to both model.py and serialize.py. The User class now accepts an email parameter, and serialize_user() returns a dictionary with both name and email fields. Verification passed.",
+      "tool_event_count": 6,
+      "usage": {
+        "input_tokens": 4899,
+        "output_tokens": 577
+      },
+      "step_ratio": 0.6666666666666666,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 6,
+        "total_calls": 6,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 2,
+      "arm": "verify-off",
+      "duration_ms": 126308,
+      "task": "08-add-field-and-serialize",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "Both model.py and serialize.py have been updated to include the email field. model.py now accepts email in __init__ and stores it as self.email. serialize.py returns a dictionary with both name and email fields.",
+      "tool_event_count": 5,
+      "usage": {
+        "input_tokens": 3275,
+        "output_tokens": 635
+      },
+      "step_ratio": 0.8,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 5,
+        "total_calls": 5,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 3,
+      "arm": "verify-on",
+      "duration_ms": 116205,
+      "task": "08-add-field-and-serialize",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "Successfully added email field to both model.py and serialize.py. The User class now accepts an email parameter, and serialize_user() includes email in the returned dictionary. Verification passed.",
+      "tool_event_count": 6,
+      "usage": {
+        "input_tokens": 4899,
+        "output_tokens": 573
+      },
+      "step_ratio": 0.6666666666666666,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 6,
+        "total_calls": 6,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 3,
+      "arm": "verify-off",
+      "duration_ms": 137584,
+      "task": "08-add-field-and-serialize",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "Both model.py and serialize.py have been updated to include the email field. model.py now accepts email in __init__ and stores it as self.email. serialize.py now returns a dictionary with both name and email fields.",
+      "tool_event_count": 7,
+      "usage": {
+        "input_tokens": 4754,
+        "output_tokens": 666
+      },
+      "step_ratio": 0.5714285714285714,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 2,
+        "distinct_calls": 5,
+        "total_calls": 7,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    }
+  ],
+  "cost": {
+    "available": true,
+    "baseline_arm": "verify-off",
+    "baseline_total_tokens": 14822,
+    "arms": {
+      "verify-on": {
+        "total_tokens": 16424,
+        "token_ratio_vs_baseline": 1.108,
+        "pass_cost_k": {
+          "pass^1": 0.9573297752627443,
+          "pass^2": 0.9573297752627443,
+          "pass^4": null,
+          "pass^8": null
+        }
+      },
+      "verify-off": {
+        "total_tokens": 14822,
+        "token_ratio_vs_baseline": 1.0,
+        "pass_cost_k": {
+          "pass^1": 1.0,
+          "pass^2": 1.0,
+          "pass^4": null,
+          "pass^8": null
+        }
+      }
+    }
+  }
+}

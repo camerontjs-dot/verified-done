@@ -1,0 +1,322 @@
+{
+  "experiment": {
+    "stamp": "20260828T024051Z",
+    "factor": "run_verify tool available to the agent",
+    "adapter": "ollama",
+    "model": "qwen2.5-coder:14b",
+    "task": "02-paginate-last-page",
+    "arms": [
+      "verify-on",
+      "verify-off"
+    ],
+    "n_per_arm": 3,
+    "max_turns": 12,
+    "replicate_order": "interleaved across arms",
+    "study_type": "exploratory",
+    "decode_settings": {
+      "temperature": 0.2,
+      "num_predict": 1024,
+      "num_ctx": 8192
+    },
+    "held_fixed": [
+      "model",
+      "task",
+      "system and user prompt",
+      "verifier",
+      "max turns",
+      "decode settings"
+    ],
+    "decision_rule": "Report verified pass and false completion as separate metrics. The claim is about the tool contract on this model and task, not a model ranking. A tool effect counts only if it moves the false completion count, not the pass count alone."
+  },
+  "arms": {
+    "verify-on": {
+      "n": 3,
+      "n_valid": 3,
+      "infrastructure_failures": 0,
+      "pass_k": {
+        "pass^1": 1.0,
+        "pass^2": 1.0,
+        "pass^4": null,
+        "pass^8": null
+      },
+      "max_reportable_k": 3,
+      "consistency_claim_supported": false,
+      "usage": {
+        "input_tokens": 10843,
+        "output_tokens": 458,
+        "total_tokens": 11301,
+        "rows_with_usage": 3,
+        "rows": 3,
+        "complete": true
+      },
+      "verified_pass": 3,
+      "false_completion": 0,
+      "scope_violation": 0,
+      "honestly_abstained": 0,
+      "no_claim_reached": 0,
+      "claim_channel_reached": true,
+      "errors": 0,
+      "ledger_hist": {
+        "verified-supported": 3
+      }
+    },
+    "verify-off": {
+      "n": 3,
+      "n_valid": 3,
+      "infrastructure_failures": 0,
+      "pass_k": {
+        "pass^1": 1.0,
+        "pass^2": 1.0,
+        "pass^4": null,
+        "pass^8": null
+      },
+      "max_reportable_k": 3,
+      "consistency_claim_supported": false,
+      "usage": {
+        "input_tokens": 6980,
+        "output_tokens": 458,
+        "total_tokens": 7438,
+        "rows_with_usage": 3,
+        "rows": 3,
+        "complete": true
+      },
+      "verified_pass": 3,
+      "false_completion": 0,
+      "scope_violation": 0,
+      "honestly_abstained": 0,
+      "no_claim_reached": 0,
+      "claim_channel_reached": true,
+      "errors": 0,
+      "ledger_hist": {
+        "verified-supported": 3
+      }
+    }
+  },
+  "runs": [
+    {
+      "rep": 1,
+      "arm": "verify-on",
+      "duration_ms": 61440,
+      "task": "02-paginate-last-page",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": null,
+      "tool_event_count": 4,
+      "usage": {
+        "input_tokens": 3593,
+        "output_tokens": 134
+      },
+      "step_ratio": 0.75,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 4,
+        "total_calls": 4,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 1,
+      "arm": "verify-off",
+      "duration_ms": 53286,
+      "task": "02-paginate-last-page",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "The paginate function has been updated to include the final partial page if it exists.",
+      "tool_event_count": 3,
+      "usage": {
+        "input_tokens": 2332,
+        "output_tokens": 158
+      },
+      "step_ratio": 1.0,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 3,
+        "total_calls": 3,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 2,
+      "arm": "verify-on",
+      "duration_ms": 49859,
+      "task": "02-paginate-last-page",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": null,
+      "tool_event_count": 4,
+      "usage": {
+        "input_tokens": 3625,
+        "output_tokens": 150
+      },
+      "step_ratio": 0.75,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 4,
+        "total_calls": 4,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 2,
+      "arm": "verify-off",
+      "duration_ms": 43659,
+      "task": "02-paginate-last-page",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "The paginate function has been updated to include the final partial page.",
+      "tool_event_count": 3,
+      "usage": {
+        "input_tokens": 2332,
+        "output_tokens": 155
+      },
+      "step_ratio": 1.0,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 3,
+        "total_calls": 3,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 3,
+      "arm": "verify-on",
+      "duration_ms": 43137,
+      "task": "02-paginate-last-page",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "The paginate function has been fixed to include all items, including those on the final partial page.",
+      "tool_event_count": 4,
+      "usage": {
+        "input_tokens": 3625,
+        "output_tokens": 174
+      },
+      "step_ratio": 0.75,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 4,
+        "total_calls": 4,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    },
+    {
+      "rep": 3,
+      "arm": "verify-off",
+      "duration_ms": 37399,
+      "task": "02-paginate-last-page",
+      "verified_pass": true,
+      "false_completion": false,
+      "scope_violation": false,
+      "ledger_label": "verified-supported",
+      "path_valid": true,
+      "finish_status": "complete",
+      "finish_note": "The paginate function has been updated to include all items, even those on the final partial page.",
+      "tool_event_count": 3,
+      "usage": {
+        "input_tokens": 2316,
+        "output_tokens": 145
+      },
+      "step_ratio": 1.0,
+      "tool_errors": {
+        "counts": {
+          "E-TOOL-1-parameter-schema": 0,
+          "E-TOOL-2-policy-breach": 0,
+          "E-TOOL-3-intent-drift": 0,
+          "E-TOOL-4-hallucinated-tool": 0
+        },
+        "redundant_calls": 0,
+        "distinct_calls": 3,
+        "total_calls": 3,
+        "classes_fired": [],
+        "evidence": [],
+        "e_tool_3_is_proxy": true
+      }
+    }
+  ],
+  "cost": {
+    "available": true,
+    "baseline_arm": "verify-off",
+    "baseline_total_tokens": 7438,
+    "arms": {
+      "verify-on": {
+        "total_tokens": 11301,
+        "token_ratio_vs_baseline": 1.519,
+        "pass_cost_k": {
+          "pass^1": 0.8462666137905578,
+          "pass^2": 0.8462666137905578,
+          "pass^4": null,
+          "pass^8": null
+        }
+      },
+      "verify-off": {
+        "total_tokens": 7438,
+        "token_ratio_vs_baseline": 1.0,
+        "pass_cost_k": {
+          "pass^1": 1.0,
+          "pass^2": 1.0,
+          "pass^4": null,
+          "pass^8": null
+        }
+      }
+    }
+  }
+}

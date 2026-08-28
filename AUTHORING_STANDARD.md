@@ -65,6 +65,57 @@ python3 tools/check_clean.py
 
 Must report clean: no private paths, no key-shaped secrets, and no em dashes in the publishable file set. Run before every commit intended for the public repo. This is what keeps the repo publish-safe as it grows.
 
+## Open tension: specificity against the defect signal (raised 2026-08-28)
+
+Rule 1 asks that a prompt state the observable end state. Applied strictly, it
+would have removed the only source of failure this suite has ever recorded.
+
+Across 269 graded runs, 64 of 65 false completions are
+`07-propagate-tax-param` (see Finding G). Task 07 states `total()`'s default and never states
+`checkout()`'s, while its verifier requires it, and the prompt's own example call
+supplies a plausible wrong value. That is a specificity defect by rule 1, and it
+is the reason the task produces defects. The tasks that satisfy rule 1 most
+completely, `04` and `08`, have never produced one.
+
+So an author following this checklist as written will keep building tasks that
+cannot fail. That is the opposite of what the suite is for.
+
+The distinction the rule is missing is between two kinds of underspecification:
+
+- **Unfair.** The required value cannot be derived from the prompt or the
+  workspace. The model can only guess. This is a broken task and rule 1 is right
+  to forbid it.
+- **Realistic.** The required value is derivable from context but is not stated,
+  and something more salient points the wrong way. This is how real tickets
+  arrive, and it is the only condition under which this suite has ever observed a
+  model claim done on broken code.
+
+Task 07 is the second kind. A competent engineer infers that a pass-through
+default should not change existing behaviour, so `0.0` is recoverable; `0.1` is
+merely louder.
+
+Resolving this is a prerequisite for authoring new tasks, not a side note. Until
+it is resolved, do not read rule 1 as requiring that every value the verifier
+checks appears in the prompt.
+
+### A worked counterexample for anyone drafting the twin
+
+The obvious twin for task 07 does not work, and it is worth recording why before
+someone spends a day on it. Take `01-add-currency-field`, delete *"defaulting to
+`USD`"* from its prompt, and leave its verifier asserting `p.currency == "USD"`.
+This looks like a clean single-variable perturbation. It is not a valid task:
+`01`'s workspace contains no occurrence of `USD` anywhere, so the value becomes
+underivable and the task turns into the unfair kind. Any false completions it
+produced would be evidence about guessing an arbitrary string, not about
+specification gaps.
+
+A sound twin has to make the correct value derivable and the wrong value more
+salient. That means authoring both members together against one workspace that
+establishes the correct value, with the two prompts differing in exactly one
+sentence. It is two tasks of work, not an edit to an existing one, and no
+existing task may be modified to produce it: `01` carries 32 runs of history and
+`07` carries 311, and changing either would silently invalidate them.
+
 ## Reviewer sign-off
 
 Record in PR or task notes:

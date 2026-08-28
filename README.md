@@ -66,7 +66,7 @@ python3 runner/run.py live --model claude-haiku-4-5 --label haiku-smoke
 # or: --env-file path/to/your/.env
 ```
 
-Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) (**Findings A–F**). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
+Live receipts are written under `results/live/` locally, which is gitignored: cloud runs are not bit-reproducible and their raw traces can reference private paths. The curated, scrubbed public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md) (**Findings A–I**). See also [`METHODOLOGY.md`](METHODOLOGY.md) and [`AUTHORING_STANDARD.md`](AUTHORING_STANDARD.md).
 
 ### Run the experiment, not just the scoring
 
@@ -147,6 +147,9 @@ python3 runner/run.py regrade    # re-derive labels after a label-space change
 | **D** | Local `qwen2.5-coder:14b`, task 07 | n=10: 10/10 false completion without the tool; 3/10 pass and 1/10 false completion with it |
 | **E** | Same as D, Ollama 0.32.7 → 0.32.9 | Replicates. Pooled 1/20 false completion with the tool against 20/20 without |
 | **F** | Instrument, 2026-08-15 | The Ollama adapter was discarding reasoning-model output. Model-dependence is now `qwen2.5-coder:14b` (1/20 false completion with the tool) against `qwen3:14b` (9/10 with the tool). |
+| **G** | 269 graded runs | 64/65 false completions land on task 07; the mechanism remains a hypothesis |
+| **H** | `qwen2.5-coder:14b`, task 07 | Retained specimens show five of six runs wrote the same defect; verify mostly changed the claim in this cell |
+| **I** | `gemma4:12b`, task 07 | Host failure: six runs were not-assessable, not a model result |
 
 Companion write-up: [agent-eval-notes Report 06](https://github.com/camerontjs-dot/agent-eval-notes/blob/main/reports/06-verify-tool-false-completion.md).
 
