@@ -29,9 +29,9 @@ That is why the private lab's promotion gate placed "zero false completion claim
 
 ## External deterministic verification
 
-Every run happens in a disposable copy of the task workspace, created with `copytree` into a temporary directory. The agent's edits, or the reference solution during selftest, are overlaid onto that copy. The verifier is injected as `_verify.py`, run with the copy as its working directory so imports resolve against the possibly-edited code, and the exit code decides pass or fail. The original task files are never mutated.
+For an offline grade, the runner copies the complete produced workspace to a temporary directory. It injects the task's verifier as `_verify.py` and runs it in that copy, so imports resolve against the submitted code. The verifier’s exit code sets `verify_pass`. The runner also checks which files changed before it sets `verified_pass`.
 
-The verifier being outside the agent's reach is the whole point. Without a hidden, deterministic check, a pass rate is a self-report.
+The demo verifiers are public. The live adapter's optional `run_verify` tool returns the verifier's output during the attempt. The runner grades the final workspace in a fresh copy even if the agent never called that tool.
 
 ## Task categories
 
@@ -71,7 +71,7 @@ Every grade and live receipt maps to one primary **ledger** label (shared taxono
 
 A single-trial pass rate says whether an agent *can* do something. It does not say whether the agent does it *reliably*, and reliability is the question that matters when nobody reviews the output.
 
-Runs therefore report `pass^k`: the probability that **all** k independent trials succeed. This is not `pass@k`, which asks whether at least one of k attempts succeeds and suits a setting where a human picks the good one.
+The runner estimates `pass^k` using the fraction of groups of k observed trials in which **all** k succeeded, sampled without replacement. `pass@k` asks whether at least one of k attempts succeeds.
 
 Two consequences are worth stating plainly:
 
@@ -184,7 +184,7 @@ This is a scope decision rather than an oversight. A suite covering OS-level or 
 
 Ablation: `--no-verify-tool` hides `run_verify` (self-verify path flags do not apply in that arm).
 
-Offline `grade` of a hand-built workspace remains supported for fixture work. Capability and graduation claims should prefer live receipts (see root `HARNESS.md`).
+Offline `grade` scores a supplied workspace and the completion claim you enter. To study how an agent reached that outcome, use the tool events in a live receipt.
 
 The live cross-stack board stays local under `results/live/`. The public summary is [`results/LIVE_EVIDENCE.md`](results/LIVE_EVIDENCE.md).
 

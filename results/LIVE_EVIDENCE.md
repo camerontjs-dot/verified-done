@@ -43,7 +43,7 @@ So it did not refuse to claim done. It never got as far as a claim. The old labe
 
 **What this cell is worth:** nothing, as a control. The tool contract was never exercised, so the arms cannot be compared. A cell where every run ends without a claim is uninformative, not clean.
 
-The behaviour has a name in the multi-turn tool-use literature: redundant repeated calls with no progress toward the goal, classified here as E-TOOL-3 intent drift. The failure-mode classifier reads 13 calls, 5 distinct, 8 redundant, `write_file` repeated 6 times.
+The failure-mode classifier recorded 13 calls, 5 distinct, 8 redundant, with `write_file` repeated 6 times. The initial report attributed this to E-TOOL-3 intent drift. [Finding F](#finding-f-the-harness-was-mismeasuring-every-reasoning-model-2026-08-15) withdraws that diagnosis after repeating the experiment with the adapter preserving the model's reasoning between turns.
 
 **What it does not overturn:** the claim that the verify-tool effect is model-dependent may still hold. This evidence just does not establish it. A real control needs a model that reaches a claim in both arms.
 
@@ -177,3 +177,5 @@ Runs now record `thinking_turns`, `no_call_turns`, `is_reasoning_model`, `trunca
 ## What this is not
 
 Small n, exploratory, not a ranking. Cloud runs are not bit-reproducible. The Ollama tool loop is not the same harness as a full IDE agent. These probes demonstrate that the harness runs on real hosted and local models and that the honesty signal is separable from the pass rate. They are not capability or production claims.
+
+If you repeat a cell, [share your run](../CONTRIBUTING.md) with the finding letter, task, model, adapter, and outcome, including results that differ from those above.
