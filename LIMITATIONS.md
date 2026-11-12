@@ -18,6 +18,8 @@ The public demo split is small and openly published. Anything public can end up 
 
 Each verifier is deterministic and is checked by selftest to confirm it fails on the starting state and passes on the reference solution. That does not prove a verifier is airtight. A determined or lucky agent might pass a check without doing the intended work, for example by hard-coding an expected value. The tasks are written to make that hard, and hardening against cheap passes is ongoing, but it is not a solved problem and should not be assumed.
 
+If a verifier accepts an incorrect solution or rejects a valid one, [report the smallest example that shows the discrepancy](CONTRIBUTING.md).
+
 ## Narrow by construction
 
 The tasks are small, self-contained, and deterministic so the verifier can be trusted. Real engineering is none of those things. This benchmark measures whether an agent finishes a bounded task and reports completion honestly. It says nothing about design judgment, large-codebase navigation, ambiguous requirements, or anything the verifier cannot check.
@@ -34,4 +36,4 @@ Optional live Anthropic runs (`runner/run.py live`) produce separate, dated rece
 
 ## Live adapter limits
 
-The Anthropic live adapter is a minimal tool loop (list/read/write/finish), not a full IDE agent. It does not score rich trajectory constraints (temporal/causal research paths). Commit-class tagging and the commit-claim hybrid check are first steps toward AgentAbstain-style path honesty, not a complete port of GroundEval.
+The Anthropic live adapter offers file listing, reading, writing, optional self-verification with `run_verify`, and a `finish` call. Its trajectory checks cover actions such as claiming completion after a failed self-check. Richer temporal or causal reasoning about the work remains outside their scope.

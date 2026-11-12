@@ -2,6 +2,8 @@
 
 Published task-quality bar, generalized from the selftest and aligned with Terminal-Bench-style authoring standards. Every demo-split task must pass this checklist before merge. Direction-2 claim authoring reuses the same principles (see twin and critic rules below).
 
+For a first task, [copy and adapt a working example](CONTRIBUTING.md#build-your-own-task). You can also [suggest the case in plain language](https://github.com/camerontjs-dot/verified-done/issues/new?template=task-idea.md).
+
 ## Required properties
 
 ### 1. Specificity
