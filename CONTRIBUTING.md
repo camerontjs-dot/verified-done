@@ -6,6 +6,12 @@ If you have a regression test for an existing verifier, a PR with the smallest f
 
 If you'd like to make a small code change, [help a tester keep two grades of the same task](https://github.com/camerontjs-dot/verified-done/issues/5). The issue describes the current behavior and a way to check the change.
 
+## Working together
+
+If you disagree with a verdict, point to the task requirement, changed file or verifier result that would change your conclusion. Personal attacks and harassment are unwelcome. You can [report abuse or spam to GitHub](https://docs.github.com/en/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam).
+
+Link the original public report when you turn someone else’s finding into a task, and preserve any required credits on shared fixtures or code. Ask before quoting a private report or naming its author. Share material you have permission to redistribute under the [project’s MIT license](LICENSE).
+
 ## Share a run or a setup problem
 
 Start with the [README walkthrough](README.md). Then [open a run report](https://github.com/camerontjs-dot/verified-done/issues/new?template=run-report.md). A clean pass is worth reporting. So is the first command that stopped you. A few sentences are enough.
